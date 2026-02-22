@@ -1,12 +1,16 @@
 {
   "name": "@squish/github-action",
   "version": "0.1.0",
-  "type": "module",
-  "main": "./src/index.ts",
+  "type": "commonjs",
+  "main": "./dist/index.js",
   "exports": {
     ".": "./src/index.ts"
   },
+  "scripts": {
+    "build": "bun build ./src/index.ts --target node --format cjs --outfile ./dist/index.js"
+  },
   "dependencies": {
+    "@actions/core": "workspace:*",
     "@squish/core": "workspace:*"
   }
 }

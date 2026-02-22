@@ -1,0 +1,9 @@
+{
+  "name": "@actions/core",
+  "version": "1.11.1",
+  "type": "module",
+  "main": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  }
+}

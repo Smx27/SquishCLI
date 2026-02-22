@@ -1,0 +1,52 @@
+name: Squish CLI
+
+description: Compress images and PDFs in CI with Squish presets and optional size budgets.
+
+inputs:
+  path:
+    description: File or directory path to scan for compressible assets.
+    required: true
+  preset:
+    description: Compression preset (low, medium, high, extreme).
+    required: true
+  target-size:
+    description: Optional target size (e.g. 200kb, 1mb).
+    required: true
+  commit:
+    description: Overwrite source files with optimized files.
+    required: true
+  artifact:
+    description: Write optimization report artifact JSON to this path.
+    required: true
+  max-size:
+    description: Optional max size budget (e.g. 300kb, 1mb) applied per optimized file.
+    required: true
+  dry-run:
+    description: Skip writes and only report what would be optimized.
+    required: true
+  include-glob:
+    description: Optional comma/newline separated include globs.
+    required: true
+  exclude-glob:
+    description: Optional comma/newline separated exclude globs.
+    required: true
+
+outputs:
+  files-scanned:
+    description: Number of files discovered after include/exclude filtering.
+  files-optimized:
+    description: Number of files successfully optimized.
+  bytes-before:
+    description: Total input bytes across optimized files.
+  bytes-after:
+    description: Total output bytes across optimized files.
+  bytes-saved:
+    description: Total bytes saved across optimized files.
+  savings-percent:
+    description: Percentage savings computed from totals.
+  budget-violations:
+    description: Number of optimized files that exceeded max-size budget.
+
+runs:
+  using: node20
+  main: dist/index.js
