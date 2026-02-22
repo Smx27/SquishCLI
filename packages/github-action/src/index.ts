@@ -2,7 +2,7 @@ import * as core from "@actions/core";
 import { commentOnPullRequest } from "./services/pr-comment.service";
 import { uploadCompressedArtifact } from "./services/artifact.service";
 import { applyOptimizedFiles, autoCommitOptimizedFiles } from "./services/git.service";
-import { parseInputs } from "./services/scanner.service";
+import { parseInputs } from "./config/inputs";
 import { runCompression } from "./services/compression.service";
 import { publishRunReport } from "./services/reporter.service";
 

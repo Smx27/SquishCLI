@@ -1,6 +1,6 @@
 import { readFile } from "node:fs/promises";
 import path from "node:path";
-import { PRESETS, targetSizeToBytes } from "@squish/core";
+import { PRESETS, parseTargetSize, targetSizeToBytes } from "@squish/core";
 import type { CompressionPreset, TargetSize } from "@squish/core";
 
 export interface UserConfig {
@@ -62,14 +62,4 @@ export function resolveCompressionConfig(
   };
 }
 
-export function parseTargetSize(value?: string): TargetSize | undefined {
-  if (!value) return undefined;
-
-  const match = value.trim().toLowerCase().match(/^(\d+(?:\.\d+)?)(b|kb|mb)$/);
-  if (!match) return undefined;
-
-  return {
-    value: Number(match[1]),
-    unit: match[2] as TargetSize["unit"]
-  };
-}
+export { parseTargetSize } from "@squish/core";
