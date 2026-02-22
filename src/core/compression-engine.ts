@@ -1,6 +1,7 @@
-import { mkdtemp, rename, rm } from "node:fs/promises";
-import { join, parse } from "node:path";
+import { mkdtemp, rename, rm, readdir, stat } from "node:fs/promises";
+import { join, parse, resolve } from "node:path";
 import { tmpdir } from "node:os";
+import pLimit from "p-limit";
 import { compressImage } from "../services/image-compressor.service";
 import { compressPdf } from "../services/pdf-compressor.service";
 import { detectSupportedFileType } from "../utils/file-detect";
@@ -11,20 +12,32 @@ import type { CompressionJob, CompressionPreset, CompressionResult } from "../ty
 const MAX_TARGET_ATTEMPTS = 6;
 const QUALITY_FLOOR = 25;
 
-/**
- * Orchestrates routing of files to type-specific compression services.
- */
+export interface EngineOptions {
+  outputDir?: string;
+  concurrency?: number;
+  onProgress?: (event: { completed: number; total: number; result: CompressionResult }) => void;
+}
+
 export async function runCompressionEngine(
   inputPaths: string[],
   preset: CompressionPreset,
-  outputDir?: string
+  options: EngineOptions = {}
 ): Promise<CompressionResult[]> {
-  const jobs = buildCompressionJobs(inputPaths, preset, outputDir);
+  const jobs = await buildCompressionJobs(inputPaths, preset, options.outputDir);
   const results: CompressionResult[] = [];
+  const limit = pLimit(Math.max(1, options.concurrency ?? 4));
+  let completed = 0;
 
-  for (const job of jobs) {
-    results.push(await compressJob(job));
-  }
+  await Promise.all(
+    jobs.map((job) =>
+      limit(async () => {
+        const result = await compressJob(job);
+        results.push(result);
+        completed += 1;
+        options.onProgress?.({ completed, total: jobs.length, result });
+      })
+    )
+  );
 
   return results;
 }
@@ -104,31 +117,56 @@ async function compressToTargetSize(job: CompressionJob): Promise<CompressionRes
   }
 }
 
-/**
- * Converts raw input paths into routable jobs for the engine.
- */
-export function buildCompressionJobs(
+export async function buildCompressionJobs(
   inputPaths: string[],
   preset: CompressionPreset,
   outputDir?: string
-): CompressionJob[] {
+): Promise<CompressionJob[]> {
   const jobs: CompressionJob[] = [];
 
   for (const inputPath of inputPaths) {
-    const fileType = detectSupportedFileType(inputPath);
+    const discoveredFiles = await collectFiles(resolve(inputPath));
 
-    if (!fileType) {
-      logWarn(`Skipping unsupported file type: ${inputPath}`);
-      continue;
+    for (const filePath of discoveredFiles) {
+      const fileType = detectSupportedFileType(filePath);
+
+      if (!fileType) {
+        logWarn(`Skipping unsupported file type: ${filePath}`);
+        continue;
+      }
+
+      jobs.push({
+        inputPath: filePath,
+        outputPath: outputDir ? buildOutputPathInDir(filePath, outputDir) : undefined,
+        fileType,
+        preset
+      });
     }
-
-    jobs.push({
-      inputPath,
-      outputPath: outputDir ? buildOutputPathInDir(inputPath, outputDir) : undefined,
-      fileType,
-      preset
-    });
   }
 
   return jobs;
+}
+
+async function collectFiles(inputPath: string): Promise<string[]> {
+  try {
+    const stats = await stat(inputPath);
+    if (stats.isFile()) {
+      return [inputPath];
+    }
+
+    if (!stats.isDirectory()) {
+      logWarn(`Skipping non-file path: ${inputPath}`);
+      return [];
+    }
+
+    const entries = await readdir(inputPath, { withFileTypes: true });
+    const nestedFiles = await Promise.all(
+      entries.map((entry) => collectFiles(join(inputPath, entry.name)))
+    );
+
+    return nestedFiles.flat();
+  } catch {
+    logWarn(`Skipping invalid path: ${inputPath}`);
+    return [];
+  }
 }
