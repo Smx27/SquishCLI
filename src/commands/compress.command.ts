@@ -13,7 +13,7 @@ export async function runCompressCommand(argv: string[]): Promise<void> {
 
   cli
     .command("compress [...input]", "Compress supported files (images and PDFs)")
-    .option("-p, --preset <name>", "Compression preset", { default: "balanced" })
+    .option("-p, --preset <name>", "Compression preset", { default: "medium" })
     .option("-t, --target <value>", "Target size like 300kb or 1mb")
     .option("-o, --output <dir>", "Output directory")
     .action(async (input: string[], flags: { preset: string; target?: string; output?: string }) => {

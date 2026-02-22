@@ -1,4 +1,9 @@
 /**
+ * Supported output image formats.
+ */
+export type ImageFormat = "original" | "jpeg" | "png" | "webp";
+
+/**
  * Preset that controls quality and optional target size behavior for compression.
  */
 export interface CompressionPreset {
@@ -6,6 +11,10 @@ export interface CompressionPreset {
   name: string;
   /** Quality level from 1-100 (higher means better quality and larger files). */
   quality: number;
+  /** Optional downscale ratio for image resolution. */
+  resolutionScale?: number;
+  /** Preferred output format for images. */
+  format?: ImageFormat;
   /** Optional target size in bytes to aim for. */
   targetSizeBytes?: number;
 }
@@ -37,6 +46,8 @@ export interface CompressionJob {
   fileType: SupportedFileType;
   /** Compression preset to apply. */
   preset: CompressionPreset;
+  /** Optional quality override used by iterative target-size compression. */
+  qualityOverride?: number;
 }
 
 /**
@@ -53,6 +64,8 @@ export interface CompressionResult {
   originalSizeBytes?: number;
   /** Output file size in bytes (if known). */
   compressedSizeBytes?: number;
+  /** Compression reduction percentage. */
+  reductionPercent?: number;
   /** Optional error details for failures. */
   error?: string;
 }

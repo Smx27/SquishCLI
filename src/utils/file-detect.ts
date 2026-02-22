@@ -1,21 +1,25 @@
+import { extname } from "node:path";
 import type { SupportedFileType } from "../types/compression";
 
-const IMAGE_EXTENSIONS = new Set([".jpg", ".jpeg", ".png", ".webp", ".avif", ".gif", ".tiff"]);
+const IMAGE_EXTENSIONS = new Set([".jpg", ".jpeg", ".png", ".webp"]);
+const PDF_EXTENSIONS = new Set([".pdf"]);
+
+const IMAGE_MIME_TYPES = new Set(["image/jpeg", "image/jpg", "image/png", "image/webp"]);
+const PDF_MIME_TYPES = new Set(["application/pdf"]);
 
 /**
- * Determines supported file type by extension.
+ * Determines supported file type by extension and optional MIME type.
  */
-export function detectSupportedFileType(filePath: string): SupportedFileType | null {
-  const lower = filePath.toLowerCase();
+export function detectSupportedFileType(filePath: string, mimeType?: string): SupportedFileType | null {
+  const extension = extname(filePath).toLowerCase();
+  const normalizedMime = mimeType?.trim().toLowerCase();
 
-  if (lower.endsWith(".pdf")) {
+  if (PDF_EXTENSIONS.has(extension) || (normalizedMime && PDF_MIME_TYPES.has(normalizedMime))) {
     return "pdf";
   }
 
-  for (const extension of IMAGE_EXTENSIONS) {
-    if (lower.endsWith(extension)) {
-      return "image";
-    }
+  if (IMAGE_EXTENSIONS.has(extension) || (normalizedMime && IMAGE_MIME_TYPES.has(normalizedMime))) {
+    return "image";
   }
 
   return null;
