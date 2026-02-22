@@ -3,8 +3,7 @@ import chokidar from "chokidar";
 import ora from "ora";
 import { basename, resolve } from "node:path";
 import { parseTargetSize, readUserConfig, resolveCompressionConfig } from "../config/load-config";
-import { runCompressionEngine } from "../core/compression-engine";
-import { formatBytes } from "../utils/file-size";
+import { formatBytes, runCompressionEngine } from "@squish/core";
 import { logError, logInfo, logSuccess, logWarn } from "../utils/logger";
 
 interface CommandFlags {

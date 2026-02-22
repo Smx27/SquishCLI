@@ -1,0 +1,19 @@
+{
+  "name": "@squish/cli",
+  "version": "0.1.0",
+  "type": "module",
+  "main": "./src/index.ts",
+  "bin": {
+    "squish": "../../bin/squish.ts"
+  },
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@squish/core": "workspace:*",
+    "cac": "^6.7.14",
+    "chalk": "^5.4.1",
+    "chokidar": "^4.0.3",
+    "ora": "^8.2.0"
+  }
+}

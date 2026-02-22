@@ -3,24 +3,21 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
+  "workspaces": [
+    "packages/*"
+  ],
   "bin": {
     "squish": "./bin/squish.ts"
   },
   "scripts": {
     "dev": "bun run --watch ./bin/squish.ts",
     "build": "bun build ./bin/squish.ts --outdir dist --target bun",
-    "bundle": "bun build ./bin/squish.ts --compile --outfile dist/squish"
-  },
-  "dependencies": {
-    "cac": "^6.7.14",
-    "chalk": "^5.4.1",
-    "ora": "^8.2.0",
-    "sharp": "^0.33.5",
-    "p-limit": "^6.2.0",
-    "chokidar": "^4.0.3"
+    "bundle": "bun build ./bin/squish.ts --compile --outfile dist/squish",
+    "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
+    "@types/node": "^22.13.10",
     "typescript": "^5.7.3",
-    "@types/node": "^22.13.10"
+    "bun-types": "^1.2.4"
   }
 }

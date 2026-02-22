@@ -4,12 +4,29 @@
     "module": "ESNext",
     "moduleResolution": "Bundler",
     "strict": true,
-    "types": ["bun-types"],
+    "types": [
+      "node"
+    ],
     "noEmit": true,
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
-    "forceConsistentCasingInFileNames": true
+    "forceConsistentCasingInFileNames": true,
+    "baseUrl": ".",
+    "paths": {
+      "@squish/core": [
+        "packages/core/src/index.ts"
+      ],
+      "@squish/cli": [
+        "packages/cli/src/index.ts"
+      ],
+      "@squish/github-action": [
+        "packages/github-action/src/index.ts"
+      ]
+    }
   },
-  "include": ["bin/**/*.ts", "src/**/*.ts"]
+  "include": [
+    "bin/**/*.ts",
+    "packages/**/*.ts"
+  ]
 }

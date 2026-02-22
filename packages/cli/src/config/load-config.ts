@@ -1,8 +1,7 @@
 import { readFile } from "node:fs/promises";
 import path from "node:path";
-import { PRESETS } from "./presets";
-import { targetSizeToBytes } from "../utils/file-size";
-import type { CompressionPreset, TargetSize } from "../types/compression";
+import { PRESETS, targetSizeToBytes } from "@squish/core";
+import type { CompressionPreset, TargetSize } from "@squish/core";
 
 export interface UserConfig {
   preset?: string;
