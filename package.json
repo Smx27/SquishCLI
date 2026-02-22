@@ -13,7 +13,8 @@
     "dev": "bun run --watch ./bin/squish.ts",
     "build": "bun build ./bin/squish.ts --outdir dist --target bun",
     "bundle": "bun build ./bin/squish.ts --compile --outfile dist/squish",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "bun test"
   },
   "devDependencies": {
     "@types/node": "^22.13.10",

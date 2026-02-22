@@ -22,6 +22,21 @@
       ],
       "@squish/github-action": [
         "packages/github-action/src/index.ts"
+      ],
+      "@actions/core": [
+        "packages/actions-core/src/index.ts"
+      ],
+      "@actions/github": [
+        "packages/actions-github/src/index.ts"
+      ],
+      "@actions/artifact": [
+        "packages/actions-artifact/src/index.ts"
+      ],
+      "p-limit": [
+        "packages/core/src/testing/p-limit.ts"
+      ],
+      "sharp": [
+        "packages/core/src/testing/sharp.ts"
       ]
     }
   },
