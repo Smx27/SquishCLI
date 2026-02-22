@@ -10,6 +10,7 @@ export interface ActionInputs {
   artifactName?: string;
   maxSize?: TargetSize;
   dryRun: boolean;
+  failOnBudgetViolation: boolean;
   includeGlobs: string[];
   excludeGlobs: string[];
 }
@@ -114,6 +115,10 @@ export function parseInputs(): ActionInputs {
     artifactName: core.getInput("artifact", { required: true }).trim() || undefined,
     maxSize: parseOptionalTargetSize("max-size", core.getInput("max-size", { required: true })),
     dryRun: parseBooleanInput("dry-run", core.getInput("dry-run", { required: true })),
+    failOnBudgetViolation: parseBooleanInput(
+      "fail-on-budget-violation",
+      core.getInput("fail-on-budget-violation", { required: true })
+    ),
     includeGlobs,
     excludeGlobs
   };

@@ -12,6 +12,7 @@ export interface CompressionRunResult {
   results: CompressionResult[];
   filesScanned: number;
   maxSizeBytes?: number;
+  budgetViolations: Array<{ inputPath: string; sizeBytes: number }>;
 }
 
 export async function runCompression(inputs: ActionInputs): Promise<CompressionRunResult> {
@@ -22,6 +23,7 @@ export async function runCompression(inputs: ActionInputs): Promise<CompressionR
     includeGlobs: inputs.includeGlobs,
     excludeGlobs: inputs.excludeGlobs,
     dryRun: inputs.dryRun,
+    maxSizeBytes: inputs.maxSize ? targetSizeToBytes(inputs.maxSize) : undefined,
     onProgress: ({ completed, total, result }) => {
       process.stdout.write(`[${completed}/${total}] ${result.inputPath}: ${result.success ? "ok" : "failed"}\n`);
     }
@@ -39,11 +41,22 @@ export async function runCompression(inputs: ActionInputs): Promise<CompressionR
       error: file.error
     }));
 
+  const maxSizeBytes = inputs.maxSize ? targetSizeToBytes(inputs.maxSize) : undefined;
+  const budgetViolations =
+    maxSizeBytes === undefined
+      ? []
+      : optimization.files
+          .filter((file) => file.status === "optimized" || file.status === "dry-run")
+          .map((file) => ({ inputPath: file.inputPath, sizeBytes: file.compressedSizeBytes ?? file.originalSizeBytes ?? 0 }))
+          .filter((file) => file.sizeBytes > maxSizeBytes)
+          .sort((a, b) => b.sizeBytes - a.sizeBytes);
+
   return {
     optimization,
     results,
     filesScanned: optimization.totals.eligible,
-    maxSizeBytes: inputs.maxSize ? targetSizeToBytes(inputs.maxSize) : undefined
+    maxSizeBytes,
+    budgetViolations
   };
 }
 
