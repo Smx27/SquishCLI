@@ -51,9 +51,8 @@ export async function autoCommitOptimizedFiles(changedCandidates: string[]): Pro
   const status = await runGit(["status", "--porcelain", "--", ...changedCandidates]);
   const changedFiles = status
     .split("\n")
-    .map((line) => line.trim())
-    .filter(Boolean)
-    .map((line) => line.slice(3));
+    .map((line) => line.replace(/^\s*[A-Z?]{1,2}\s+/, "").trim())
+    .filter(Boolean);
 
   if (changedFiles.length === 0) {
     return { committed: false, files: [] };
