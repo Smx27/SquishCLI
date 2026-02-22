@@ -1,20 +1,17 @@
-/**
- * Writes an informational log message.
- */
+import chalk from "chalk";
+
 export function logInfo(message: string): void {
-  console.log(`[squish] ${message}`);
+  console.log(chalk.cyan(`[squish] ${message}`));
 }
 
-/**
- * Writes a warning log message.
- */
+export function logSuccess(message: string): void {
+  console.log(chalk.green(`[squish] ${message}`));
+}
+
 export function logWarn(message: string): void {
-  console.warn(`[squish] WARN: ${message}`);
+  console.warn(chalk.yellow(`[squish] WARN: ${message}`));
 }
 
-/**
- * Writes an error log message.
- */
 export function logError(message: string): void {
-  console.error(`[squish] ERROR: ${message}`);
+  console.error(chalk.red(`[squish] ERROR: ${message}`));
 }
