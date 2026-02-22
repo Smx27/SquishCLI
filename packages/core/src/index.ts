@@ -8,7 +8,7 @@ export type {
   ImageFormat
 } from "./types/compression";
 export { PRESETS } from "./config/presets";
-export { targetSizeToBytes, formatBytes, getFileSizeBytes } from "./utils/file-size";
+export { targetSizeToBytes, parseTargetSize, formatBytes, getFileSizeBytes } from "./utils/file-size";
 export { detectSupportedFileType } from "./utils/file-detect";
 export { buildDefaultOutputPath, buildOutputPathInDir } from "./utils/path";
 

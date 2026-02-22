@@ -9,6 +9,21 @@ export function targetSizeToBytes(targetSize: TargetSize): number {
   return Math.round(targetSize.value * multipliers[targetSize.unit]);
 }
 
+
+/**
+ * Parses a size string (e.g. `200kb`) into a {@link TargetSize}.
+ */
+export function parseTargetSize(value?: string): TargetSize | undefined {
+  if (!value) return undefined;
+
+  const match = value.trim().toLowerCase().match(/^(\d+(?:\.\d+)?)(b|kb|mb)$/);
+  if (!match) return undefined;
+
+  return {
+    value: Number(match[1]),
+    unit: match[2] as TargetSize["unit"]
+  };
+}
 /**
  * Reads file size from disk and returns bytes.
  */
