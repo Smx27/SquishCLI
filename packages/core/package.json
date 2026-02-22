@@ -1,0 +1,13 @@
+{
+  "name": "@squish/core",
+  "version": "0.1.0",
+  "type": "module",
+  "main": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "p-limit": "^6.2.0",
+    "sharp": "^0.33.5"
+  }
+}

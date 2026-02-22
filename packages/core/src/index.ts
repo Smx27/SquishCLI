@@ -1,0 +1,13 @@
+export { runCompressionEngine, buildCompressionJobs } from "./core/compression-engine";
+export type {
+  CompressionPreset,
+  CompressionResult,
+  CompressionJob,
+  TargetSize,
+  SupportedFileType,
+  ImageFormat
+} from "./types/compression";
+export { PRESETS } from "./config/presets";
+export { targetSizeToBytes, formatBytes, getFileSizeBytes } from "./utils/file-size";
+export { detectSupportedFileType } from "./utils/file-detect";
+export { buildDefaultOutputPath, buildOutputPathInDir } from "./utils/path";

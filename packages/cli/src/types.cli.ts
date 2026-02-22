@@ -1,4 +1,4 @@
-import type { CompressionPreset, TargetSize } from "./compression";
+import type { CompressionPreset, TargetSize } from "@squish/core";
 
 /**
  * Parsed CLI flags normalized into a single object for command handlers.
