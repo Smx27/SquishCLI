@@ -244,3 +244,19 @@ Prefer immutable releases/tags over branch refs for production pipelines:
 - uses: owner/squishcli@v2.1.3
 ```
 
+## Release tag convention
+
+- `v2.0.0` is an **immutable** release tag.
+- `v2` is a **moving major** tag updated to latest stable `v2.x.y`.
+
+For deterministic builds, pin `v2.0.0` style tags. For easier patch/minor adoption, use `v2`.
+
+## Maintainer notes
+
+Maintainers should follow the release and Marketplace maintenance checklist in `docs/GITHUB_ACTION_RELEASE.md`.
+
+Highlights:
+
+- Keep `packages/github-action/dist/index.js` committed and in sync with source.
+- Ensure CI check `Action Bundle Freshness / verify-bundle` is required in branch protection.
+- Update `action.yml` + README metadata together for Marketplace accuracy.

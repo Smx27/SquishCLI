@@ -1,0 +1,37 @@
+name: Action Bundle Freshness
+
+on:
+  pull_request:
+    paths:
+      - packages/github-action/**
+      - .github/workflows/action-bundle-freshness.yml
+  push:
+    branches:
+      - main
+    paths:
+      - packages/github-action/**
+      - .github/workflows/action-bundle-freshness.yml
+
+jobs:
+  verify-bundle:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+
+      - name: Install dependencies
+        run: bun install
+
+      - name: Verify action metadata points to bundled entrypoint
+        run: |
+          grep -Eq '^\s*main:\s*dist/index.js\s*$' packages/github-action/action.yml
+
+      - name: Build action bundle
+        run: bun run --cwd packages/github-action build
+
+      - name: Ensure bundled artifact is committed and fresh
+        run: git diff --exit-code -- packages/github-action/dist/index.js
