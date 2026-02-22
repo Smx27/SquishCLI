@@ -16,7 +16,19 @@ async function run(): Promise<void> {
     );
 
     if (inputs.dryRun) {
-      await publishRunReport([], runResult.filesScanned, runResult.maxSizeBytes);
+      await publishRunReport([], runResult.filesScanned, {
+        maxSizeBytes: runResult.maxSizeBytes,
+        violations: runResult.budgetViolations
+      });
+
+      if (inputs.failOnBudgetViolation && runResult.budgetViolations.length > 0) {
+        const top = runResult.budgetViolations
+          .slice(0, 5)
+          .map((item) => `${item.inputPath} (${item.sizeBytes} bytes)`)
+          .join(", ");
+        core.setFailed(`Budget violations (${runResult.budgetViolations.length}): ${top}`);
+      }
+
       return;
     }
 
@@ -34,13 +46,24 @@ async function run(): Promise<void> {
       await uploadCompressedArtifact(inputs.artifactName, runResult.results);
     }
 
-    await publishRunReport(runResult.results, runResult.filesScanned, runResult.maxSizeBytes);
+    await publishRunReport(runResult.results, runResult.filesScanned, {
+      maxSizeBytes: runResult.maxSizeBytes,
+      violations: runResult.budgetViolations
+    });
 
     const prCommented = await commentOnPullRequest(
       `Squish optimized **${runResult.optimization.totals.optimized}** file(s) and saved **${runResult.optimization.totals.bytesSaved}** bytes.`
     );
     if (prCommented) {
       core.info("Posted PR comment with Squish summary.");
+    }
+
+    if (inputs.failOnBudgetViolation && runResult.budgetViolations.length > 0) {
+      const top = runResult.budgetViolations
+        .slice(0, 5)
+        .map((item) => `${item.inputPath} (${item.sizeBytes} bytes)`)
+        .join(", ");
+      core.setFailed(`Budget violations (${runResult.budgetViolations.length}): ${top}`);
     }
 
     if (runResult.optimization.totals.failed > 0) {

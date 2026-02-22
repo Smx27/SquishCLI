@@ -16,7 +16,9 @@ export type SkippedReason =
   | "unsupported_type"
   | "excluded_by_glob"
   | "not_included_by_glob"
-  | "file_budget_exceeded";
+  | "file_budget_exceeded"
+  | "already_within_target_size"
+  | "already_within_max_size";
 
 export interface OptimizeRepositoryAssetsOptions {
   inputPaths: string[];
@@ -27,6 +29,7 @@ export interface OptimizeRepositoryAssetsOptions {
   dryRun?: boolean;
   concurrency?: number;
   maxFileBudget?: number;
+  maxSizeBytes?: number;
   outputDir?: string;
   onProgress?: (event: { completed: number; total: number; result: CompressionResult }) => void;
 }
@@ -71,7 +74,7 @@ export async function optimizeRepositoryAssets(
 
   const discovered = await collectDiscoveredFiles(options.inputPaths);
   const files: FileOptimizationStatus[] = [];
-  const eligibleFiles: Array<{ inputPath: string; fileType: SupportedFileType }> = [];
+  const eligibleFiles: Array<{ inputPath: string; fileType: SupportedFileType; sizeBytes: number }> = [];
 
   for (const item of discovered) {
     if (item.error) {
@@ -95,7 +98,34 @@ export async function optimizeRepositoryAssets(
       continue;
     }
 
-    eligibleFiles.push({ inputPath: item.inputPath, fileType: detectedType });
+    const sizeBytes = item.sizeBytes ?? 0;
+    if (resolvedPreset.targetSizeBytes !== undefined && sizeBytes <= resolvedPreset.targetSizeBytes) {
+      files.push({
+        inputPath: item.inputPath,
+        fileType: detectedType,
+        status: "skipped",
+        skippedReason: "already_within_target_size",
+        originalSizeBytes: sizeBytes,
+        compressedSizeBytes: sizeBytes,
+        reductionPercent: 0
+      });
+      continue;
+    }
+
+    if (options.maxSizeBytes !== undefined && sizeBytes <= options.maxSizeBytes) {
+      files.push({
+        inputPath: item.inputPath,
+        fileType: detectedType,
+        status: "skipped",
+        skippedReason: "already_within_max_size",
+        originalSizeBytes: sizeBytes,
+        compressedSizeBytes: sizeBytes,
+        reductionPercent: 0
+      });
+      continue;
+    }
+
+    eligibleFiles.push({ inputPath: item.inputPath, fileType: detectedType, sizeBytes });
   }
 
   const fileBudget = options.maxFileBudget;
@@ -115,7 +145,13 @@ export async function optimizeRepositoryAssets(
 
   if (options.dryRun) {
     for (const item of processable) {
-      files.push({ inputPath: item.inputPath, fileType: item.fileType, status: "dry-run" });
+      files.push({
+        inputPath: item.inputPath,
+        fileType: item.fileType,
+        status: "dry-run",
+        originalSizeBytes: item.sizeBytes,
+        compressedSizeBytes: item.sizeBytes
+      });
     }
 
     return buildResult(files, resolvedPreset);
@@ -208,16 +244,18 @@ function matchesAny(filePath: string, patterns: string[]): boolean {
 
 async function collectDiscoveredFiles(
   inputPaths: string[]
-): Promise<Array<{ inputPath: string; error?: string }>> {
+): Promise<Array<{ inputPath: string; sizeBytes?: number; error?: string }>> {
   const collected = await Promise.all(inputPaths.map((inputPath) => collectFiles(resolve(inputPath))));
   return collected.flat();
 }
 
-async function collectFiles(inputPath: string): Promise<Array<{ inputPath: string; error?: string }>> {
+async function collectFiles(
+  inputPath: string
+): Promise<Array<{ inputPath: string; sizeBytes?: number; error?: string }>> {
   try {
     const stats = await stat(inputPath);
     if (stats.isFile()) {
-      return [{ inputPath }];
+      return [{ inputPath, sizeBytes: stats.size }];
     }
 
     if (!stats.isDirectory()) {

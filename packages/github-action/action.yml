@@ -24,6 +24,9 @@ inputs:
   dry-run:
     description: Skip writes and only report what would be optimized.
     required: true
+  fail-on-budget-violation:
+    description: Mark the action as failed when max-size violations are found.
+    required: true
   include-glob:
     description: Optional comma/newline separated include globs.
     required: true
@@ -46,6 +49,10 @@ outputs:
     description: Percentage savings computed from totals.
   budget-violations:
     description: Number of optimized files that exceeded max-size budget.
+  budget-threshold-bytes:
+    description: Applied max-size threshold converted to bytes.
+  budget-worst-offenders:
+    description: Semicolon-delimited top budget offenders with final size in bytes.
 
 runs:
   using: node20
