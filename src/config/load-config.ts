@@ -6,7 +6,7 @@ import type { CompressionPreset, TargetSize } from "../types/compression";
  * Resolves a preset name and applies optional target size override.
  */
 export function loadCompressionPreset(presetName: string, targetSize?: TargetSize): CompressionPreset {
-  const selected = PRESETS[presetName] ?? PRESETS.balanced;
+  const selected = PRESETS[presetName] ?? PRESETS.medium;
   if (!targetSize) {
     return selected;
   }
