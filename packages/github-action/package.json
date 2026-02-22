@@ -11,6 +11,8 @@
   },
   "dependencies": {
     "@actions/core": "workspace:*",
-    "@squish/core": "workspace:*"
+    "@squish/core": "workspace:*",
+    "@actions/artifact": "workspace:*",
+    "@actions/github": "workspace:*"
   }
 }

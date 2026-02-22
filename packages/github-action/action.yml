@@ -16,7 +16,7 @@ inputs:
     description: Overwrite source files with optimized files.
     required: true
   artifact:
-    description: Write optimization report artifact JSON to this path.
+    description: Optional artifact name for uploading compressed outputs.
     required: true
   max-size:
     description: Optional max size budget (e.g. 300kb, 1mb) applied per optimized file.
