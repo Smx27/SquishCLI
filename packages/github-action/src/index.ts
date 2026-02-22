@@ -3,8 +3,7 @@ import { cp, mkdir, rm, writeFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import {
   PRESETS,
-  buildCompressionJobs,
-  runCompressionEngine,
+  optimizeRepositoryAssets,
   targetSizeToBytes,
   type CompressionResult,
   type TargetSize
@@ -64,25 +63,6 @@ function parseInputs(): ActionInputs {
   };
 }
 
-function escapeRegex(value: string): string {
-  return value.replace(/[|\\{}()[\]^$+?.]/g, "\\$&");
-}
-
-function globToRegex(pattern: string): RegExp {
-  const normalized = pattern.replace(/\\/g, "/");
-  const tokenized = normalized
-    .split("**")
-    .map((part) => part.split("*").map(escapeRegex).join("[^/]*"))
-    .join(".*");
-  return new RegExp(`^${tokenized}$`);
-}
-
-function matchesAny(filePath: string, patterns: string[]): boolean {
-  if (patterns.length === 0) return false;
-  const normalizedPath = filePath.replace(/\\/g, "/");
-  return patterns.some((pattern) => globToRegex(pattern).test(normalizedPath));
-}
-
 function setOutputs(results: CompressionResult[], filesScanned: number, maxSizeBytes?: number): void {
   const optimized = results.filter((result) => result.success);
   const bytesBefore = optimized.reduce((sum, result) => sum + (result.originalSizeBytes ?? 0), 0);
@@ -119,54 +99,66 @@ async function maybeCommitResults(results: CompressionResult[]): Promise<void> {
 async function run(): Promise<void> {
   try {
     const inputs = parseInputs();
-    const preset = PRESETS[inputs.preset];
-    const resolvedPreset =
-      inputs.targetSize === undefined ? preset : { ...preset, targetSizeBytes: targetSizeToBytes(inputs.targetSize) };
 
-    const rootPath = resolve(inputs.inputPath);
-    const allJobs = await buildCompressionJobs([rootPath], resolvedPreset);
-    const filteredJobs = allJobs.filter((job) => {
-      const includeMatch = inputs.includeGlobs.length === 0 || matchesAny(job.inputPath, inputs.includeGlobs);
-      const excludeMatch = matchesAny(job.inputPath, inputs.excludeGlobs);
-      return includeMatch && !excludeMatch;
-    });
-
-    core.info(`Discovered ${allJobs.length} supported files; ${filteredJobs.length} matched include/exclude filters.`);
-
-    if (inputs.dryRun) {
-      setOutputs([], filteredJobs.length, inputs.maxSize ? targetSizeToBytes(inputs.maxSize) : undefined);
-      if (inputs.artifactPath) {
-        await writeArtifact(resolve(inputs.artifactPath), { mode: "dry-run", files: filteredJobs.map((job) => job.inputPath) });
-      }
-      return;
-    }
-
-    const results = await runCompressionEngine(filteredJobs.map((job) => job.inputPath), resolvedPreset, {
+    const optimization = await optimizeRepositoryAssets({
+      inputPaths: [resolve(inputs.inputPath)],
+      preset: inputs.preset,
+      targetSize: inputs.targetSize,
+      includeGlobs: inputs.includeGlobs,
+      excludeGlobs: inputs.excludeGlobs,
+      dryRun: inputs.dryRun,
       onProgress: ({ completed, total, result }) => {
         core.info(`[${completed}/${total}] ${result.inputPath}: ${result.success ? "ok" : "failed"}`);
       }
     });
+
+    core.info(
+      `Discovered ${optimization.totals.discovered} files; eligible ${optimization.totals.eligible}; skipped ${optimization.totals.skipped}.`
+    );
+
+    if (inputs.dryRun) {
+      setOutputs([], optimization.totals.eligible, inputs.maxSize ? targetSizeToBytes(inputs.maxSize) : undefined);
+      if (inputs.artifactPath) {
+        await writeArtifact(resolve(inputs.artifactPath), {
+          mode: "dry-run",
+          files: optimization.files.filter((file) => file.status === "dry-run").map((file) => file.inputPath)
+        });
+      }
+      return;
+    }
+
+    const results: CompressionResult[] = optimization.files
+      .filter((file) => file.status === "optimized" || file.status === "failed")
+      .map((file) => ({
+        inputPath: file.inputPath,
+        outputPath: file.outputPath ?? file.inputPath,
+        success: file.status === "optimized",
+        originalSizeBytes: file.originalSizeBytes,
+        compressedSizeBytes: file.compressedSizeBytes,
+        reductionPercent: file.reductionPercent,
+        error: file.error
+      }));
 
     if (inputs.commit) {
       await maybeCommitResults(results);
     }
 
     const maxSizeBytes = inputs.maxSize ? targetSizeToBytes(inputs.maxSize) : undefined;
-    setOutputs(results, filteredJobs.length, maxSizeBytes);
+    setOutputs(results, optimization.totals.eligible, maxSizeBytes);
 
     if (inputs.artifactPath) {
       await writeArtifact(resolve(inputs.artifactPath), {
-        filesScanned: filteredJobs.length,
+        filesScanned: optimization.totals.eligible,
         results,
+        report: optimization,
         maxSizeBytes,
         generatedAt: new Date().toISOString()
       });
     }
 
-    const failures = results.filter((result) => !result.success);
-    if (failures.length > 0) {
-      failures.forEach((failure) => core.error(`${failure.inputPath}: ${failure.error ?? "unknown error"}`));
-      core.setFailed(`${failures.length} compression job(s) failed.`);
+    if (optimization.totals.failed > 0) {
+      optimization.errors.forEach((failure) => core.error(`${failure.inputPath}: ${failure.error}`));
+      core.setFailed(`${optimization.totals.failed} compression job(s) failed.`);
     }
   } catch (error) {
     core.setFailed(error instanceof Error ? error.message : "Unexpected github action error.");

@@ -11,3 +11,6 @@ export { PRESETS } from "./config/presets";
 export { targetSizeToBytes, formatBytes, getFileSizeBytes } from "./utils/file-size";
 export { detectSupportedFileType } from "./utils/file-detect";
 export { buildDefaultOutputPath, buildOutputPathInDir } from "./utils/path";
+
+export { optimizeRepositoryAssets } from "./core/repository-optimizer";
+export type { OptimizeRepositoryAssetsOptions, OptimizeRepositoryAssetsResult, FileOptimizationStatus, OptimizationTotals, SkippedReason } from "./core/repository-optimizer";
